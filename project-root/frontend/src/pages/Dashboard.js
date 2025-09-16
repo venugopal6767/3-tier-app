@@ -12,6 +12,17 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
+  // Fetch CSRF token
+  const getCsrfToken = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/csrf-token`);
+      return res.data.csrf_token;
+    } catch (err) {
+      console.error('Failed to fetch CSRF token', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (!token) {
       navigate('/login');
@@ -19,7 +30,9 @@ const Dashboard = () => {
     }
     const fetchTasks = async () => {
       try {
-        const res = await axios.get(`${API_URL}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await axios.get(`${API_URL}/tasks`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setTasks(res.data);
         setError('');
       } catch (err) {
@@ -43,12 +56,29 @@ const Dashboard = () => {
       setError('Title and scheduled time are required');
       return;
     }
+
     try {
-      await axios.post(`${API_URL}/tasks`, formData, { headers: { Authorization: `Bearer ${token}` } });
+      const csrfToken = await getCsrfToken();
+      if (!csrfToken) {
+        setError('Could not get CSRF token');
+        return;
+      }
+
+      await axios.post(`${API_URL}/tasks`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken,
+        },
+      });
+
       setSuccess('Task created successfully!');
       setError('');
       setFormData({ title: '', description: '', scheduled_time: '' });
-      const res = await axios.get(`${API_URL}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
+
+      // Refresh tasks
+      const res = await axios.get(`${API_URL}/tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setTasks(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to create task');
@@ -58,10 +88,25 @@ const Dashboard = () => {
 
   const handleUpdate = async (taskId, updatedData) => {
     try {
-      await axios.put(`${API_URL}/tasks/${taskId}`, updatedData, { headers: { Authorization: `Bearer ${token}` } });
+      const csrfToken = await getCsrfToken();
+      if (!csrfToken) {
+        setError('Could not get CSRF token');
+        return;
+      }
+
+      await axios.put(`${API_URL}/tasks/${taskId}`, updatedData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken,
+        },
+      });
+
       setSuccess('Task updated successfully!');
       setError('');
-      const res = await axios.get(`${API_URL}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
+
+      const res = await axios.get(`${API_URL}/tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setTasks(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to update task');
@@ -71,10 +116,25 @@ const Dashboard = () => {
 
   const handleDelete = async (taskId) => {
     try {
-      await axios.delete(`${API_URL}/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const csrfToken = await getCsrfToken();
+      if (!csrfToken) {
+        setError('Could not get CSRF token');
+        return;
+      }
+
+      await axios.delete(`${API_URL}/tasks/${taskId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken,
+        },
+      });
+
       setSuccess('Task deleted successfully!');
       setError('');
-      const res = await axios.get(`${API_URL}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
+
+      const res = await axios.get(`${API_URL}/tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setTasks(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete task');
@@ -88,6 +148,8 @@ const Dashboard = () => {
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Dashboard</h2>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         {success && <p className="text-green-500 mb-4">{success}</p>}
+
+        {/* Add Task Form */}
         <form onSubmit={handleSubmit} className="mb-8">
           <h3 className="text-xl mb-4 text-gray-700">Add New Task</h3>
           <input
@@ -116,6 +178,8 @@ const Dashboard = () => {
             Add Task
           </button>
         </form>
+
+        {/* Task List */}
         <h3 className="text-xl mb-4 text-gray-700">Your Tasks</h3>
         <ul>
           {tasks.map((task) => (
@@ -146,6 +210,7 @@ const Dashboard = () => {
             </li>
           ))}
         </ul>
+
         <button
           onClick={() => {
             localStorage.removeItem('token');

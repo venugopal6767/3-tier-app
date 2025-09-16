@@ -14,14 +14,35 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Fetch CSRF token from backend
+  const getCsrfToken = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/csrf-token`);
+      return res.data.csrf_token;
+    } catch (err) {
+      console.error('Failed to fetch CSRF token', err);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.username || !formData.email || !formData.password) {
       setError('All fields are required');
       return;
     }
+
     try {
-      await axios.post(`${API_URL}/users/register`, formData);
+      const csrfToken = await getCsrfToken();
+      if (!csrfToken) {
+        setError('Could not get CSRF token');
+        return;
+      }
+
+      await axios.post(`${API_URL}/users/register`, formData, {
+        headers: { 'X-CSRF-Token': csrfToken },
+      });
+
       setSuccess('Registration successful! Redirecting to login...');
       setError('');
       setTimeout(() => navigate('/login'), 2000);
