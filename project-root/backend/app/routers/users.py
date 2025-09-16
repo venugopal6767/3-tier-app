@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from .. import schemas, crud, database
 from datetime import timedelta
 
 router = APIRouter(prefix="/users", tags=["users"])
 security = HTTPBearer()
+limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/register", response_model=schemas.UserOut)
-def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     db_user = crud.get_user_by_username(db, username=user.username)
     if db_user:
         crud.log_event(db, user_id=None, event_type="register", status=False)
@@ -22,7 +26,8 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     return new_user
 
 @router.post("/login")
-def login(user: schemas.UserLogin, db: Session = Depends(database.get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, user: schemas.UserLogin, db: Session = Depends(database.get_db)):
     db_user = crud.authenticate_user(db, user.username, user.password)
     if not db_user:
         crud.log_event(db, user_id=None, event_type="login", status=False)
