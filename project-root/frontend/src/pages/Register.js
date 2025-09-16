@@ -11,7 +11,7 @@ function Register() {
 
   // Fetch CSRF token once when component mounts
   useEffect(() => {
-    fetch("http://localhost:8000/csrf-token", { credentials: "include" })
+    fetch("http://backend:8000/csrf-token", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         console.log("CSRF token fetched:", data.csrf_token);
@@ -28,7 +28,7 @@ function Register() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8000/users/register", {
+      const res = await fetch("http://backend:8000/users/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
