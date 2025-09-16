@@ -24,7 +24,7 @@ app.add_exception_handler(429, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Update to your domain in production
+    allow_origins=["http://frontend:3000"],  # Update to your domain in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
