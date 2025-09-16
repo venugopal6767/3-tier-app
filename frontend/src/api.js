@@ -1,50 +1,33 @@
-// Use relative paths so the frontend can call the backend via the same origin (nginx will proxy /api -> backend)
-const API_BASE = (process.env.REACT_APP_API_URL !== undefined) ? process.env.REACT_APP_API_URL : '';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://backend:5000';
 
-export async function register(username, password) {
-  const res = await fetch(`${API_BASE}/api/auth/register`, {
+export const registerUser = async (username, password) => {
+  const res = await fetch(`${API_BASE}/api/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ username, password }),
   });
   return res.json();
-}
+};
 
-export async function login(username, password) {
-  const res = await fetch(`${API_BASE}/api/auth/login`, {
+export const loginUser = async (username, password) => {
+  const res = await fetch(`${API_BASE}/api/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ username, password }),
   });
   return res.json();
-}
+};
 
-export async function listTodos(userId) {
-  const res = await fetch(`${API_BASE}/api/todos/${userId}`);
+export const getTodos = async (userId) => {
+  const res = await fetch(`${API_BASE}/api/todos?userId=${userId}`);
   return res.json();
-}
+};
 
-export async function createTodo(userId, title) {
+export const addTodo = async (userId, title) => {
   const res = await fetch(`${API_BASE}/api/todos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, title })
+    body: JSON.stringify({ userId, title }),
   });
   return res.json();
-}
-
-export async function updateTodo(id, title, completed) {
-  const res = await fetch(`${API_BASE}/api/todos/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, completed })
-  });
-  return res.json();
-}
-
-export async function deleteTodo(id) {
-  const res = await fetch(`${API_BASE}/api/todos/${id}`, {
-    method: 'DELETE'
-  });
-  return res.json();
-}
+};
