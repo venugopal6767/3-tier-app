@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const metrics = require('../metrics');
 const router = express.Router();
 
 // For simplicity, user_id is passed in requests. In production use sessions or JWT.
@@ -25,6 +26,7 @@ router.post('/', (req, res) => {
       console.error('Create todo error', err);
       return res.status(500).json({ error: 'Could not create todo' });
     }
+    metrics.todoCreated.inc();
     res.json({ todo: result.rows[0] });
   });
 });
@@ -38,6 +40,7 @@ router.put('/:id', (req, res) => {
       console.error('Update todo error', err);
       return res.status(500).json({ error: 'Could not update todo' });
     }
+    metrics.todoUpdated.inc();
     res.json({ todo: result.rows[0] });
   });
 });
@@ -50,6 +53,7 @@ router.delete('/:id', (req, res) => {
       console.error('Delete todo error', err);
       return res.status(500).json({ error: 'Could not delete todo' });
     }
+    metrics.todoDeleted.inc();
     res.json({ deleted: result.rows[0] });
   });
 });

@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const metrics = require('./metrics');
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
@@ -8,9 +9,10 @@ const pool = new Pool({
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
 });
 
-// query wrapper that logs queries
+// query wrapper that logs queries and increments metric
 function query(text, params, cb) {
   const start = Date.now();
+  metrics.dbQueries.inc();
   return pool.query(text, params, (err, res) => {
     const duration = Date.now() - start;
     console.log('Executed query', { text, duration, rows: res ? res.rowCount : 0 });

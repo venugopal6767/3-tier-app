@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const metrics = require('../metrics');
 const router = express.Router();
 
 // register
@@ -22,9 +23,14 @@ router.post('/login', (req, res) => {
   db.query('SELECT id, username FROM users WHERE username=$1 AND password=$2', [username, password], (err, result) => {
     if (err) {
       console.error('Login error', err);
+      metrics.loginFailure.inc();
       return res.status(500).json({ error: 'Login failed' });
     }
-    if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
+    if (result.rows.length === 0) {
+      metrics.loginFailure.inc();
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    metrics.loginSuccess.inc();
     res.json({ user: result.rows[0] });
   });
 });

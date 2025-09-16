@@ -1,4 +1,5 @@
-const API_BASE = process.env.REACT_APP_API_URL || 'http://backend:3000';
+// Use relative paths so the frontend can call the backend via the same origin (nginx will proxy /api -> backend)
+const API_BASE = (process.env.REACT_APP_API_URL !== undefined) ? process.env.REACT_APP_API_URL : '';
 
 export async function register(username, password) {
   const res = await fetch(`${API_BASE}/api/auth/register`, {
